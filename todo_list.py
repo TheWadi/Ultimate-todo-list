@@ -40,6 +40,7 @@ class TodoListApp(tk.Tk):
         language_menu.add_command(label=_('English'), command=lambda: self.change_language('en'))
         language_menu.add_command(label=_('Français'), command=lambda: self.change_language('fr'))
         language_menu.add_command(label=_('Español'), command=lambda: self.change_language('es'))
+        language_menu.add_command(label=_('Português'), command=lambda: self.change_language('pt'))
 
     def add_task(self):
         task_text = self.task_entry.get()
@@ -183,6 +184,21 @@ class Translator:
                 'file': 'Archivo',
                 'language': 'Idioma',
                 'warning': 'Advertencia',
+            },
+            'pt': {
+                'add_task': 'Adicionar uma tarefa',
+                'save': 'Salvar',
+                'load': 'Carregar',
+                'edit_task': 'Editar tarefa',
+                'enter_new_task': 'Digite o novo nome da tarefa:',
+                'delete_task': 'Excluir tarefa',
+                'confirm_delete': 'Tem certeza de que deseja excluir esta tarefa?',
+                'enter_task_name': 'Por favor, insira um nome para a tarefa.',
+                'load_tasks': 'Carregar tarefas',
+                'load_from_tasks_txt': 'Deseja carregar as tarefas de \'tasks.txt\'?',
+                'file': 'Arquivo',
+                'language': 'Idioma',
+                'warning': 'Aviso',
             },
         }
 
