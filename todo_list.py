@@ -1,9 +1,10 @@
 import tkinter as tk
+from tkinter import messagebox
 
 class TodoListApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('The Ultimate To do List')
+        self.title('The Ultimate To-Do List')
         self.geometry('400x300')
 
         self.task_entry = tk.Entry(self)
@@ -21,6 +22,8 @@ class TodoListApp(tk.Tk):
             task = tk.Checkbutton(self.tasks_frame, text=task_text)
             task.pack(anchor='w')
             self.task_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Warning", "Please enter a task name.")
 
 if __name__ == '__main__':
     app = TodoListApp()
