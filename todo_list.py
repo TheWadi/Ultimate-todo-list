@@ -19,13 +19,11 @@ class TodoListApp(tk.Tk):
 
         self.create_menu()
 
-        # List to store Checkbutton and BooleanVar for each task
         self.task_widgets = []
 
-        # File path for the last loaded/saved file
         self.last_file_path = None
 
-        # Load tasks from the last file on startup, if available
+
         self.load_last_file_tasks()
 
     def create_menu(self):
@@ -94,18 +92,16 @@ class TodoListApp(tk.Tk):
                     task_text = child.cget("text")
                     task_state = var.get()
                     file.write(f"{task_text},{task_state}\n")
-            # Update the last file path
             self.last_file_path = file_path
 
     def load_tasks(self):
         file_path = filedialog.askopenfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")])
         if file_path:
             self.load_tasks_from_file(file_path)
-            # Update the last file path
             self.last_file_path = file_path
 
     def load_last_file_tasks(self):
-        # Check if "tasks.txt" exists in the same directory as the script or executable
+        # Check if "tasks.txt" exists in the same directory as the exe (sonic.exe ref ???)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         tasks_file_path = os.path.join(script_dir, "tasks.txt")
 
