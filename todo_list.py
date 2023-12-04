@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import simpledialog, messagebox
+from tkinter import filedialog, simpledialog, messagebox
+import os
 
 class TodoListApp(tk.Tk):
     def __init__(self):
@@ -16,19 +17,37 @@ class TodoListApp(tk.Tk):
         self.tasks_frame = tk.Frame(self)
         self.tasks_frame.pack(fill='both', expand=True)
 
-        # Load tasks from file on startup
-        self.load_tasks()
+        self.create_menu()
+
+        # List to store Checkbutton and BooleanVar for each task
+        self.task_widgets = []
+
+        # File path for the last loaded/saved file
+        self.last_file_path = None
+
+        # Load tasks from the last file on startup, if available
+        self.load_last_file_tasks()
+
+    def create_menu(self):
+        menubar = tk.Menu(self)
+        self.config(menu=menubar)
+
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Save", command=self.save_tasks)
+        file_menu.add_command(label="Load", command=self.load_tasks)
 
     def add_task(self):
         task_text = self.task_entry.get()
         if task_text:
-            task = tk.Checkbutton(self.tasks_frame, text=task_text, command=lambda task=task_text: self.toggle_task(task))
+            var = tk.BooleanVar()
+            task = tk.Checkbutton(self.tasks_frame, text=task_text, variable=var)
             task.pack(anchor='w')
             task.bind("<Button-3>", lambda event, task=task: self.show_context_menu(event, task))
             self.task_entry.delete(0, tk.END)
 
-            # Save tasks to file after adding a new task
-            self.save_tasks()
+            # Add Checkbutton and BooleanVar to the list
+            self.task_widgets.append((task, var))
         else:
             messagebox.showwarning("Warning", "Please enter a task name.")
 
@@ -42,12 +61,10 @@ class TodoListApp(tk.Tk):
         new_text = simpledialog.askstring("Edit Task", "Enter new task name:", parent=self)
         if new_text:
             # Find and update the task widget
-            for child in self.tasks_frame.winfo_children():
-                if child.cget("text") == task:
+            for (child, var) in self.task_widgets:
+                if child.cget("text") == task.cget("text"):
                     child.config(text=new_text)
                     break
-            # Save tasks to file after editing a task
-            self.save_tasks()
         else:
             messagebox.showwarning("Warning", "Please enter a task name.")
 
@@ -55,38 +72,58 @@ class TodoListApp(tk.Tk):
         result = messagebox.askyesno("Delete Task", "Are you sure you want to delete this task?", parent=self)
         if result:
             # Find and remove the task widget
-            for child in self.tasks_frame.winfo_children():
-                if child.cget("text") == task:
+            for i, (child, var) in enumerate(self.task_widgets):
+                if child.cget("text") == task.cget("text"):
                     child.destroy()
+                    del self.task_widgets[i]
                     break
-            # Save tasks to file after deleting a task
-            self.save_tasks()
 
     def toggle_task(self, task_text):
         # Find and update the task widget
-        for child in self.tasks_frame.winfo_children():
+        for (child, var) in self.task_widgets:
             if child.cget("text") == task_text:
-                current_state = child.instate(['selected'])
-                child.deselect() if current_state else child.select()
+                current_state = var.get()
+                var.set(not current_state)
                 break
-        # Save tasks to file after toggling a task
-        self.save_tasks()
 
     def save_tasks(self):
-        with open("tasks.txt", "w") as file:
-            for child in self.tasks_frame.winfo_children():
-                task_text = child.cget("text")
-                task_state = child.instate(['selected'])
-                file.write(f"{task_text},{task_state}\n")
+        file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")])
+        if file_path:
+            with open(file_path, "w") as file:
+                for (child, var) in self.task_widgets:
+                    task_text = child.cget("text")
+                    task_state = var.get()
+                    file.write(f"{task_text},{task_state}\n")
+            # Update the last file path
+            self.last_file_path = file_path
 
     def load_tasks(self):
+        file_path = filedialog.askopenfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")])
+        if file_path:
+            self.load_tasks_from_file(file_path)
+            # Update the last file path
+            self.last_file_path = file_path
+
+    def load_last_file_tasks(self):
+        # Check if "tasks.txt" exists in the same directory as the script or executable
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        tasks_file_path = os.path.join(script_dir, "tasks.txt")
+
+        if os.path.exists(tasks_file_path):
+            result = messagebox.askyesno("Load Tasks", "Do you want to load tasks from 'tasks.txt'?", parent=self)
+            if result:
+                self.load_tasks_from_file(tasks_file_path)
+
+    def load_tasks_from_file(self, file_path):
         try:
-            with open("tasks.txt", "r") as file:
+            with open(file_path, "r") as file:
                 for line in file:
                     task_text, task_state_str = line.strip().split(',')
                     task_state = task_state_str.lower() == 'true'
-                    task = tk.Checkbutton(self.tasks_frame, text=task_text, command=lambda t=task_text: self.toggle_task(t))
+                    var = tk.BooleanVar(value=task_state)
+                    task = tk.Checkbutton(self.tasks_frame, text=task_text, variable=var)
                     task.pack(anchor='w')
+                    self.task_widgets.append((task, var))
                     task.select() if task_state else task.deselect()
         except FileNotFoundError:
             pass  # If the file doesn't exist, do nothing (no tasks to load)
